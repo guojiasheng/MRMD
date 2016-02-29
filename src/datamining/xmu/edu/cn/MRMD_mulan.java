@@ -4,54 +4,79 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Map.Entry;
+import weka.core.Instances;
+import weka.classifiers.Classifier;
+import weka.classifiers.Evaluation;
+import weka.classifiers.functions.LibSVM;
+import weka.classifiers.meta.Bagging;
+import weka.classifiers.trees.J48;
+import weka.classifiers.trees.RandomForest;
+import weka.classifiers.trees.j48.*;
 
 public class MRMD_mulan {
 
+	static String [] classAttr;
+	static double [][] feaData;
+	static String [][] labelData;
+	static List<Map.Entry<String, Double>> mrmrList;
+	static String inputFile;
+	static String outoputFile;
+	static int insNum = 0;
+	static int feaNum = 0;
+	static int labNum = 0;
+	static double bestRate=0;
+	static double auc=0;
+	private static int optNum;
+	private static String model="";
 	public static void main(String[] args) throws Exception {
 		// TODO Auto-generated method stub
 	// 测试命令	
-	//	String x="-i D://test.arff -o D://gjs1.arff -sn 2 -ln 3 -df 1 -a D://gjs.arff";
+	//	String x="-i D://mulan.arff -o D://gjs1.arff -sn 2 -ln 1 -df 1 -a D://gjs.arff -model bagging";
 	//	args=x.split(" ");
 		
 	
 		if(args.length == 0 ||args[0].equals("-help"))
 		{
-			System.out.println("Usage: java -jar MRMD.jar -i inputFile -o outputFile -sn seleFeaNum -ln lableNum -df disFunc -a arff");
+			System.out.println("Usage: java -jar MRMD.jar -i inputFile -o outputFile -sn seleFeaNum -ln lableNum -df disFunc -a arff -model rf");
 			System.exit(0);
 		}
-		if(args.length != 12)
+		if(args.length != 14)
 		{
 			System.out.println("\r\nThe number of parameters are not enough  !!!\r\n");
-			System.out.println("Usage: java -jar MRMD.jar -i inputFile -o outputFile -sn seleFeaNum -ln lableNum -df disFunc -a arff");
+			System.out.println("Usage: java -jar MRMD.jar -i inputFile -o outputFile -sn seleFeaNum -ln lableNum -df disFunc -a arff -model rf");
 			System.exit(0);
 		}
-		String inputFile = args[1];          
-		String outoputFile = args[3];
-		int insNum = 0;
-		int feaNum = 0;
-		int labNum = 0;
+		inputFile = args[1];          
+		outoputFile = args[3];
+		model = args[13];
+		
 		try {
 			labNum = Integer.parseInt(args[7]);
 		} catch (Exception e) {
 			// TODO: handle exception
 			System.out.println("\r\nThe parameter of -ln is not a integer !!\r\n");
-			System.out.println("Usage: java -jar MRMD.jar -i inputFile -o outputFile -sn seleFeaNum -ln lableNum -df disFunc -a arff");
+			System.out.println("Usage: java -jar MRMD.jar -i inputFile -o outputFile -sn seleFeaNum -ln lableNum -df disFunc -a arff -model rf");
 			System.exit(0);
 		}
 		if(labNum < 0)
 		{
 			System.out.println("\r\nThe parameter of -ln is not available !!\r\n");
-			System.out.println("Usage: java -jar MRMD.jar -i inputFile -o outputFile -sn seleFeaNum -ln lableNum -df disFunc -a arff");
+			System.out.println("Usage: java -jar MRMD.jar -i inputFile -o outputFile -sn seleFeaNum -ln lableNum -df disFunc -a arff -model rf");
 			System.exit(0);
 		}
 		int seleFeaNum = 0;
@@ -60,7 +85,7 @@ public class MRMD_mulan {
 		} catch (Exception e) {
 			// TODO: handle exception
 			System.out.println("\r\nThe parameter of -sn is error !!\r\n");
-			System.out.println("Usage: java -jar MRMD.jar -i inputFile -o outputFile -sn seleFeaNum -ln lableNum -df disFunc -a arff");
+			System.out.println("Usage: java -jar MRMD.jar -i inputFile -o outputFile -sn seleFeaNum -ln lableNum -df disFunc -a arff -model rf");
 			System.exit(0);
 		}
 		
@@ -71,14 +96,14 @@ public class MRMD_mulan {
 		} catch (Exception e) {
 			// TODO: handle exception
 			System.out.println("\r\nThe parameter of -df is not a integer !!\r\n");
-			System.out.println("Usage: java -jar MRMD.jar -i inputFile -o outputFile -sn seleFeaNum -ln lableNum -df disFunc -a arff");
+			System.out.println("Usage: java -jar MRMD.jar -i inputFile -o outputFile -sn seleFeaNum -ln lableNum -df disFunc -a arff -model rf");
 			System.exit(0);
 		}
 		
 		if(disFunc < 1 || disFunc > 4)
 		{
 			System.out.println("\r\nThe parameter of -df is error !! df={1, 2, 3, 4}\r\n");
-			System.out.println("Usage: java -jar MRMD.jar -i inputFile -o outputFile -sn seleFeaNum -ln lableNum -df disFunc -a arff");
+			System.out.println("Usage: java -jar MRMD.jar -i inputFile -o outputFile -sn seleFeaNum -ln lableNum -df disFunc -a arff -model rf");
 			System.exit(0);
 		}
 		
@@ -105,11 +130,11 @@ public class MRMD_mulan {
 		}
 		InputBR.close();
 		feaNum=feaNum-labNum;
-		insNum--;
+		//insNum--;
 		if(seleFeaNum < 0 || seleFeaNum > feaNum)
 		{
 			System.out.println("\r\nThe parameter of -sn is not available !!\r\n");
-			System.out.println("Usage: java -jar MRMD.jar -i inputFile -o outputFile -sn seleFeaNum -ln lableNum -df disFunc -a arff");
+			System.out.println("Usage: java -jar MRMD.jar -i inputFile -o outputFile -sn seleFeaNum -ln lableNum -df disFunc -a arff -model rf");
 			System.exit(0);
 		}
 		
@@ -132,7 +157,7 @@ public class MRMD_mulan {
 		pd.setPearsonValue(PearsonValue);
 		pd.run();
 		
-		String [][] labelData = new String[insNum][labNum];
+		labelData = new String[insNum][labNum];
 		getLabel gl = new getLabel();
 		gl.setData(labelData);
 		gl.setFeaNum(feaNum);
@@ -140,7 +165,7 @@ public class MRMD_mulan {
 		gl.setLabNum(labNum);
 		gl.run(inputData);
 		
-		double [][] feaData = new double[insNum][feaNum];
+		feaData = new double[insNum][feaNum];
 		getFeaData gfd = new getFeaData();
 		gfd.setData(feaData);
 		gfd.setFeaNum(feaNum);
@@ -212,13 +237,25 @@ public class MRMD_mulan {
 				break;
 		}
 		
+		
+		double max=0;
+		for (int i=0;i<mrmrValue.length;i++){
+			if (mrmrValue[i]>max){
+				max=mrmrValue[i];
+			}
+		}
+		
+		for (int i=0;i<mrmrValue.length;i++){
+			mrmrValue[i]=mrmrValue[i]/max;
+		}
+		
 		PearsonValue = null;
 		EuclideanValue = null;
 		CosineValue = null;
 		TanimotoValue = null;
 		
 		Map<String, Double> mrmrMap = new HashMap<String, Double>(); 
-		List<Map.Entry<String, Double>> mrmrList = new ArrayList<Map.Entry<String, Double>>(mrmrMap.entrySet());
+		mrmrList = new ArrayList<Map.Entry<String, Double>>(mrmrMap.entrySet());
 		mrmrList = initialHashMap(mrmrValue, feaNum);
 		BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(outoputFile), false), "utf-8"));
 		bufferedWriter.write("The number of selected features is: " + seleFeaNum + "\r\n\r\n");
@@ -233,7 +270,9 @@ public class MRMD_mulan {
 		bufferedWriter.flush();
 		bufferedWriter.close();
 		
-		String [] classAttr = new String[labNum];
+		
+		
+		classAttr = new String[labNum];
 		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(new File(inputFile)), "utf-8"));
 		String lineString = bufferedReader.readLine();
 		while(!lineString.contains("@relation") && !lineString.contains("@Relation"))
@@ -279,6 +318,10 @@ public class MRMD_mulan {
 		}
 		bufferedReader.close();
 		
+		
+
+	
+		
 		String arff = args[11];
 		BufferedWriter arffWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(arff), false), "utf-8"));
 		arffWriter.write("@relation " + (new File(inputFile)).getName() + "_feaSele");
@@ -318,13 +361,120 @@ public class MRMD_mulan {
 		
 		arffWriter.flush();
 		arffWriter.close();
-		
-		
 		System.out.println("MRMD over.");	
+		System.out.println("Feature selction optimation begin");	
+		System.out.println("model:"+model);
+		int num = optSelect();
+		writeFeature(num);
+		System.out.println("The best feature number: "+String.valueOf(optNum));	
+		System.out.println("The best rate: "+String.valueOf(bestRate));	
+		System.out.println("Feature selction optimation end,the best arff save in opt.arff");	
 		
+	}
+	
+   public static int optSelect() throws Exception{
+	   double max=0;
+	   optNum=1;
+	   double temp=0;
+	   for(int i=1;i<= feaNum;i++){
+		   try {
+			writeFeature(i);
+			temp = featureRate();
+			System.out.println("feature num: "+i+" rate: "+temp);
+			if (temp>max){
+				max=temp;
+				optNum=i;
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	   }
+	   bestRate=max; 
+	   writeFeature(optNum);
+	   return optNum;
+   }	
+	
+	public static void writeFeature(int seleFeaNum) throws IOException{
+		BufferedWriter arffWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File("opt.arff"), false), "utf-8"));
+		arffWriter.write("@relation " + (new File(inputFile)).getName() + "_feaSele");
+		arffWriter.newLine();
+		arffWriter.newLine();
 		
+		for(int i = 0; i < seleFeaNum; i ++)
+		{
+			arffWriter.write("@attribute Fea" + i + " numeric");
+			arffWriter.newLine();
+		}
+		for(int i = 0; i < labNum; i ++)
+		{
+			arffWriter.write(classAttr[i]);
+			arffWriter.newLine();
+		}
+		arffWriter.write("\r\n@data\r\n\r\n");
 		
+	//	System.out.println("insNum" + insNum);
 		
+		for(int i = 0; i < insNum; i ++)
+		{
+			
+			for(int j = 0; j < seleFeaNum; j ++)
+			{
+//				System.out.println(i);
+				arffWriter.write(feaData[i][Integer.parseInt(mrmrList.get(j).getKey().substring(3, mrmrList.get(j).getKey().length()))] + ",");
+			}
+//			arffWriter.write(feaData[i][Integer.parseInt(mrmrList.get(seleFeaNum - 1).getKey().substring(3, mrmrList.get(seleFeaNum - 1).getKey().length()))] + "\r\n");
+			for(int j = 0; j < labNum - 1; j ++)
+			{
+				arffWriter.write(labelData[i][j] + ",");
+			}
+			arffWriter.write(labelData[i][labNum - 1]);
+			arffWriter.newLine();
+		}
+		
+		arffWriter.flush();
+		arffWriter.close();
+	}
+	
+	
+	public static Classifier getClassifier(String name){
+		Classifier classify = null;
+		switch (name){
+			case "rf":
+				 classify=new RandomForest();
+				 break;
+			case "svm":
+				 classify=new LibSVM();
+				 break;
+			case "bagging":
+				 classify=new Bagging();
+				 break;
+			default:
+				System.out.println("目前只支持rf(randomForst),svm,bagging");
+		}
+		return classify;
+	}
+	
+	
+	public static double featureRate() throws Exception{
+		FileReader reader=new FileReader("opt.arff");
+		Instances  data=new Instances(reader);
+		data.setClassIndex(data.numAttributes()-1);//设置训练集中，target的index  
+		Classifier classify=getClassifier(model);
+		classify.buildClassifier(data);
+		Evaluation eval=new Evaluation(data);
+		
+		if(insNum>10){
+			eval.crossValidateModel(classify, data,10, new Random());
+		}
+		else{
+			eval.crossValidateModel(classify, data,insNum, new Random());
+		}
+		eval.evaluateModel(classify, data);
+		return 1-eval.errorRate();
+		//System.out.println(String.valueOf(1-eval.errorRate()));
+		//System.out.println(eval.toSummaryString());
+		//System.out.println(eval.toMatrixString());
 	}
 
 	public static List initialHashMap(double data[], int feaNum)
