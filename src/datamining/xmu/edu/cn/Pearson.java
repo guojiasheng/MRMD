@@ -79,7 +79,7 @@ public class Pearson
 	
 	public double[] run()
 	{
-		System.out.println("Start to calculate Pearson¡¯s correlation coefficient...");
+		System.out.println("Start to calculate Pearson's correlation coefficient...");
 		double numerator, denominator;
 		
 		for(int i = 0; i < feaNum; ++ i)
@@ -118,7 +118,7 @@ public class Pearson
 		}
 		PearsonData = null;
 		inputData = null;
-		System.out.println("Calculating Pearson¡¯s correlation coefficient over!!!");
+		System.out.println("Calculating Pearson's correlation coefficient over!!!");
 		return PearsonValue;
 	}
 }

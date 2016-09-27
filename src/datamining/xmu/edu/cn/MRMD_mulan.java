@@ -45,7 +45,7 @@ public class MRMD_mulan {
 	static String arff = "out.arff";
 	static int insNum = 0;
 	static int feaNum = 0;
-	static int labNum = 2;
+	static int labNum = 1;
 	static int seleFeaNum = 0;
 	static int disFunc = 1;
 	static double bestRate=0;
@@ -55,7 +55,7 @@ public class MRMD_mulan {
 	public static void main(String[] args) throws Exception {
 		// TODO Auto-generated method stub
 	// ≤‚ ‘√¸¡Ó	
-//	  String x="-i D://tRNA.arff -o D://gjs1.arff -sn 2 -ln 1 -df 1 -a D://gjs.arff -model N";
+//	  String x="-i D://feature.arff -o D://gjs1.arff -sn 2 -ln 1 -df 1 -a D://gjs.arff -model rf";
 //	  args=x.split(" ");
 		
 		// Create a Parser  
@@ -92,6 +92,9 @@ public class MRMD_mulan {
 		  }  
 		  if( commandLine.hasOption("sn") ) {  
 			  seleFeaNum = Integer.parseInt(commandLine.getOptionValue("sn"));
+		  }  
+		  if( commandLine.hasOption("a") ) {  
+			  arff = commandLine.getOptionValue("a");
 		  }  
 		  if( commandLine.hasOption("m") ) {  
 			  model = commandLine.getOptionValue("m");
