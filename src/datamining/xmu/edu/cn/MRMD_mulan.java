@@ -50,12 +50,13 @@ public class MRMD_mulan {
 	static int disFunc = 1;
 	static double bestRate=0;
 	static double auc=0;
+	static boolean isAuto = true;
 	private static int optNum;
 	private static String model="rf";
 	public static void main(String[] args) throws Exception {
 		// TODO Auto-generated method stub
 	// ≤‚ ‘√¸¡Ó	
-//	  String x="-i D://feature.arff -o D://gjs1.arff -sn 2 -ln 1 -df 1 -a D://gjs.arff -model rf";
+//	  String x="-i D://feature.arff -o D://gjs1.txt -df 1 -a D://gjs.arff -model rf";
 //	  args=x.split(" ");
 		
 		// Create a Parser  
@@ -64,11 +65,10 @@ public class MRMD_mulan {
 		  options.addOption("h", "help", false, "Print this usage information");  
 		  options.addOption("i", "input", true, "input file" );  
 		  options.addOption("o", "output", true, "output file  score rank of each feature");
-		  options.addOption("sn", "selectNum", true, "the number of select feature(all number feature)" );  
-		  options.addOption("ln", "lableNum", true, "the number of lable,default(2) ");  
 		  options.addOption("df", "disFuc", true, "the distance function default(1)" );  
-		  options.addOption("a", "arff", true, "outputfile of arff default (out.arff)");  
+		  options.addOption("a", "arff", true, "outputfile of arff default (opt.arff)");  
 		  options.addOption("m", "model", true, "opt model type defauly(rf)" );  
+		  options.addOption("N", "No", false, "auto select" ); 
 		  
 		  
 		  // Parse the program arguments  
@@ -76,6 +76,11 @@ public class MRMD_mulan {
 		  // Set the appropriate variables based on supplied options  
 		  String file = "";  
 		   
+		 
+		  if(commandLine.hasOption('N')) {  
+			  isAuto= false;
+		  }  
+		  
 		  if(commandLine.hasOption('h') ) {  
 			print_help();
 		    System.exit(0);  
@@ -86,13 +91,6 @@ public class MRMD_mulan {
 		  }  
 		  outoputFile = commandLine.getOptionValue('o');
 		  inputFile = commandLine.getOptionValue('i');   
-		 
-		  if( commandLine.hasOption("ln") ) {  
-			  labNum = Integer.parseInt(commandLine.getOptionValue("ln"));
-		  }  
-		  if( commandLine.hasOption("sn") ) {  
-			  seleFeaNum = Integer.parseInt(commandLine.getOptionValue("sn"));
-		  }  
 		  if( commandLine.hasOption("a") ) {  
 			  arff = commandLine.getOptionValue("a");
 		  }  
@@ -129,7 +127,6 @@ public class MRMD_mulan {
 		String[] dataString;
 		
 		
-		
 		while(!InputLine.toUpperCase().contains("@DATA"))
 		{
 			InputLine = InputBR.readLine();
@@ -146,13 +143,8 @@ public class MRMD_mulan {
 		
 		InputBR.close();
 		feaNum=feaNum-labNum;
-		if(seleFeaNum==0) seleFeaNum = feaNum;
-		//insNum--;
-		if(seleFeaNum < 0 || seleFeaNum > feaNum)
-		{
-			System.out.println("\r\nThe parameter of -sn is not available,too bigger !!\r\n");
-			System.exit(0);
-		}
+		seleFeaNum = feaNum;
+		
 		
 		String [][] inputData = new String[insNum][feaNum + labNum];
 		getData gd = new getData();
@@ -336,60 +328,16 @@ public class MRMD_mulan {
 		}
 		bufferedReader.close();
 		
-		
-
-	
-		
-		
-		BufferedWriter arffWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(arff), false), "utf-8"));
-		arffWriter.write("@relation " + (new File(inputFile)).getName() + "_feaSele");
-		arffWriter.newLine();
-		arffWriter.newLine();
-		
-		for(int i = 1; i <= seleFeaNum; i ++)
-		{
-			arffWriter.write("@attribute Fea" + i + " numeric");
-			arffWriter.newLine();
-		}
-		for(int i = 0; i < labNum; i ++)
-		{
-			arffWriter.write(classAttr[i]);
-			arffWriter.newLine();
-		}
-		arffWriter.write("\r\n@data\r\n\r\n");
-		
-		System.out.println("insNum" + insNum);
-		
-		for(int i = 0; i < insNum; i ++)
-		{
-			
-			for(int j = 0; j < seleFeaNum; j ++)
-			{
-//				System.out.println(i);
-				arffWriter.write(feaData[i][Integer.parseInt(mrmrList.get(j).getKey().substring(3, mrmrList.get(j).getKey().length()))] + ",");
-			}
-//			arffWriter.write(feaData[i][Integer.parseInt(mrmrList.get(seleFeaNum - 1).getKey().substring(3, mrmrList.get(seleFeaNum - 1).getKey().length()))] + "\r\n");
-			for(int j = 0; j < labNum - 1; j ++)
-			{
-				arffWriter.write(labelData[i][j] + ",");
-			}
-			arffWriter.write(labelData[i][labNum - 1]);
-			arffWriter.newLine();
-		}
-		
-		arffWriter.flush();
-		arffWriter.close();
 		System.out.println("MRMD over.");	
 		System.out.println("Feature selction optimation begin");	
 		System.out.println("model:"+model);
-		if(model.equals("N")){
-			;
-		}else{
+		
+		if(isAuto){
 			int num = optSelect();
 			writeFeature(num);
 			System.out.println("The best feature number: "+String.valueOf(optNum));	
 			System.out.println("The best rate: "+String.valueOf(bestRate));	
-			System.out.println("Feature selction optimation end,the best arff save in opt.arff");	
+			System.out.println("Feature selction optimation end,the best arff save "+arff);	
 		}
 		
 	}
@@ -400,10 +348,8 @@ public class MRMD_mulan {
 		System.out.println("Usage: java -jar MRMD.jar" +
 				"-i inputFile " +
 				"-o outputFile \n" +
-				"-sn seleFeaNum default(all feature number) \n" +
-				"-ln lableNum default(2)  \n" +
 				"-df disFunc default(1) \n" +
-				"-a arff default(out.arff) \n" +
+				"-a arff default(opt.arff) \n" +
 				"-model rf default(rf)  \n");
 		System.out.println("[-i -o] is Necessary   [-sn -ln -df -a - model] is Optional ");
 		System.exit(0);
@@ -433,7 +379,7 @@ public class MRMD_mulan {
    }	
 	
 	public static void writeFeature(int seleFeaNum) throws IOException{
-		BufferedWriter arffWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File("opt.arff"), false), "utf-8"));
+		BufferedWriter arffWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(arff), false), "utf-8"));
 		arffWriter.write("@relation " + (new File(inputFile)).getName() + "_feaSele");
 		arffWriter.newLine();
 		arffWriter.newLine();
@@ -498,7 +444,7 @@ public class MRMD_mulan {
 	
 	
 	public static double featureRate() throws Exception{
-		FileReader reader=new FileReader("opt.arff");
+		FileReader reader=new FileReader(arff);
 		Instances  data=new Instances(reader);
 		data.setClassIndex(data.numAttributes()-1);//…Ë÷√—µ¡∑ºØ÷–£¨targetµƒindex  
 		Classifier classify=getClassifier(model);
@@ -506,10 +452,10 @@ public class MRMD_mulan {
 		Evaluation eval=new Evaluation(data);
 		
 		if(insNum>10){
-			eval.crossValidateModel(classify, data,10, new Random());
+			eval.crossValidateModel(classify, data,10, new Random(1000));
 		}
 		else{
-			eval.crossValidateModel(classify, data,insNum, new Random());
+			eval.crossValidateModel(classify, data,insNum, new Random(1000));
 		}
 		eval.evaluateModel(classify, data);
 		return 1-eval.errorRate();
