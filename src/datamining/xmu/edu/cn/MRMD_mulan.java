@@ -422,10 +422,12 @@ public class MRMD_mulan {
 	
 	public static Classifier getClassifier(String name){
 		Classifier classify = null;
+	
 		int enum_type=1;
-		if(name == "rf") enum_type = 1; 
-		if(name == "svm") enum_type = 2; 
-		if(name == "bagging") enum_type = 3; 
+		if(name.equals("rf")) enum_type = 1; 
+		if(name.equals("svm")) enum_type = 2; 
+		if(name.equals("bagging")) enum_type = 3; 
+	
 		switch (enum_type){
 			case 1:
 				 classify=new RandomForest();
@@ -447,11 +449,15 @@ public class MRMD_mulan {
 		FileReader reader=new FileReader(arff);
 		Instances  data=new Instances(reader);
 		data.setClassIndex(data.numAttributes()-1);//设置训练集中，target的index  
+		
+		
+		
 		Classifier classify=getClassifier(model);
 		classify.buildClassifier(data);
 		Evaluation eval=new Evaluation(data);
 		
 		if(insNum>10){
+		
 			eval.crossValidateModel(classify, data,10, new Random(1000));
 		}
 		else{
