@@ -50,7 +50,6 @@ public class Pearson
 		int num = insNum;
 		for(int i = 0; i < insNum; ++ i)
 		{
-			
 			if(data[i][col].equals("?"))
 			{
 				num --;
@@ -81,6 +80,8 @@ public class Pearson
 	{
 		System.out.println("Start to calculate Pearson's correlation coefficient...");
 		double numerator, denominator;
+		
+	
 		
 		for(int i = 0; i < feaNum; ++ i)
 		{

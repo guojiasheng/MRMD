@@ -12,6 +12,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -42,7 +43,9 @@ public class MRMD_mulan {
 	static List<Map.Entry<String, Double>> mrmrList;
 	static String inputFile;
 	static String outoputFile;
-	static String arff = "out.arff";
+	static Calendar calendar = Calendar.getInstance();
+	static int minutes = calendar.get(Calendar.MINUTE);   
+	static String arff = "out_"+ String.valueOf(minutes)+"."+"arff";
 	static int insNum = 0;
 	static int feaNum = 0;
 	static int labNum = 1;
@@ -56,9 +59,9 @@ public class MRMD_mulan {
 	public static void main(String[] args) throws Exception {
 		// TODO Auto-generated method stub
 	// ≤‚ ‘√¸¡Ó	
-//	  String x="-i D://feature.arff -o D://gjs1.txt -df 1 -a D://gjs.arff -model rf";
-//	  args=x.split(" ");
-		
+// String x="-i D://out.arff -o D://gjs1.txt ";
+//args=x.split(" ");
+//		
 		// Create a Parser  
 		  CommandLineParser parser = new BasicParser( );  
 		  Options options = new Options( );  
@@ -132,8 +135,15 @@ public class MRMD_mulan {
 			InputLine = InputBR.readLine();
 		}
 		InputLine = InputBR.readLine();
+		
+		
 		while(InputLine != null)
 		{
+			if(InputLine.equals("")){
+				InputLine = InputBR.readLine();
+				continue;
+			}
+			
 			if(insNum==1)
 				feaNum = InputLine.split(",").length;
 			insNum ++;
