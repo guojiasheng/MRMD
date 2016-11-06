@@ -59,7 +59,7 @@ public class MRMD_mulan {
 	public static void main(String[] args) throws Exception {
 		// TODO Auto-generated method stub
 	// ≤‚ ‘√¸¡Ó	
-// String x="-i D://out.arff -o D://gjs1.txt ";
+//String x="-i D://out.arff -o D://gjs1.txt -sn 20";
 //args=x.split(" ");
 //		
 		// Create a Parser  
@@ -72,16 +72,23 @@ public class MRMD_mulan {
 		  options.addOption("a", "arff", true, "outputfile of arff default (opt.arff)");  
 		  options.addOption("m", "model", true, "opt model type defauly(rf)" );  
 		  options.addOption("N", "No", false, "auto select" ); 
+		  options.addOption("sn", "sn", true, "select feature number");
 		  
-		  
+		
 		  // Parse the program arguments  
 		  CommandLine commandLine = parser.parse( options, args );  
+
 		  // Set the appropriate variables based on supplied options  
 		  String file = "";  
 		   
 		 
 		  if(commandLine.hasOption('N')) {  
 			  isAuto= false;
+		  }  
+		  
+		  if(commandLine.hasOption("sn")) {  
+			  seleFeaNum = Integer.parseInt(commandLine.getOptionValue("sn"));
+			  
 		  }  
 		  
 		  if(commandLine.hasOption('h') ) {  
@@ -153,7 +160,9 @@ public class MRMD_mulan {
 		
 		InputBR.close();
 		feaNum=feaNum-labNum;
-		seleFeaNum = feaNum;
+		if(seleFeaNum==0){
+			seleFeaNum = feaNum;
+		}
 		
 		
 		String [][] inputData = new String[insNum][feaNum + labNum];
@@ -369,7 +378,7 @@ public class MRMD_mulan {
 	   double max=0;
 	   optNum=1;
 	   double temp=0;
-	   for(int i=1;i<= feaNum;i++){
+	   for(int i=1;i<= seleFeaNum;i++){
 		   try {
 			writeFeature(i);
 			temp = featureRate();
